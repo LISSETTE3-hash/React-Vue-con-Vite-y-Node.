@@ -1,49 +1,38 @@
 const express = require("express");
 const router = express.Router();
-const db = require("../models/db"); // conexión a SQLite
 
-// 📌 Obtener usuarios
+let users = [];
+let idCounter = 1;
+
+// Obtener todos los usuarios
 router.get("/", (req, res) => {
-  db.all("SELECT * FROM users", [], (err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(rows);
-  });
+  res.json(users);
 });
 
-// 📌 Registrar usuario
+// Crear usuario
 router.post("/", (req, res) => {
-  const { dni, nombres, apellidos, fecha_nacimiento, genero, ciudad } = req.body;
-  db.run(
-    "INSERT INTO users (dni, nombres, apellidos, fecha_nacimiento, genero, ciudad) VALUES (?,?,?,?,?,?)",
-    [dni, nombres, apellidos, fecha_nacimiento, genero, ciudad],
-    function (err) {
-      if (err) return res.status(500).json({ error: err.message });
-      res.status(201).json({ id: this.lastID, ...req.body });
-    }
-  );
+  const user = { id: idCounter++, ...req.body };
+  users.push(user);
+  res.status(201).json(user);
 });
 
-// 📌 Actualizar usuario
+// Actualizar usuario
 router.put("/:id", (req, res) => {
-  const { dni, nombres, apellidos, fecha_nacimiento, genero, ciudad } = req.body;
-  const { id } = req.params;
-  db.run(
-    "UPDATE users SET dni=?, nombres=?, apellidos=?, fecha_nacimiento=?, genero=?, ciudad=? WHERE id=?",
-    [dni, nombres, apellidos, fecha_nacimiento, genero, ciudad, id],
-    function (err) {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ updated: this.changes });
-    }
-  );
+  const id = parseInt(req.params.id);
+  const index = users.findIndex(u => u.id === id);
+  if (index !== -1) {
+    users[index] = { id, ...req.body };
+    res.json(users[index]);
+  } else {
+    res.status(404).json({ error: "Usuario no encontrado" });
+  }
 });
 
-// 📌 Eliminar usuario
+// Eliminar usuario
 router.delete("/:id", (req, res) => {
-  const { id } = req.params;
-  db.run("DELETE FROM users WHERE id=?", id, function (err) {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json({ deleted: this.changes });
-  });
+  const id = parseInt(req.params.id);
+  users = users.filter(u => u.id !== id);
+  res.status(204).end();
 });
 
 module.exports = router;
