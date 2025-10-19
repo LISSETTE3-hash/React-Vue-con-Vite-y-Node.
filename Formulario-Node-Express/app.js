@@ -1,22 +1,25 @@
 const express = require("express");
-const cors = require("cors");
-
+const path = require("path");
+const bodyParser = require("body-parser");
 const app = express();
-const PORT = 3001;
+const PORT = 3000;
 
-// Middlewares
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+const usersRoutes = require("./routes/users");
 
-// Rutas
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+// Carpeta public
+app.use(express.static(path.join(__dirname, "public")));
+
+// Ruta API
+app.use("/api/users", usersRoutes);
+
+// 👉 ESTA ES LA PARTE IMPORTANTE:
 app.get("/", (req, res) => {
-  res.send("🚀 API funcionando en /api/users");
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-app.use("/api/users", require("./routes/users"));
-
-// Iniciar servidor
 app.listen(PORT, () => {
-  console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
+  console.log(`Servidor ejecutándose en http://localhost:${PORT}`);
 });
